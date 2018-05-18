@@ -17,6 +17,7 @@ action = ["up","down","left","right"]
 class Node:
 
     def __init__(self,state,done,Qs,getIdx,table):
+        self.isActive = False
         self.getIdx = getIdx
         self.Qs = Qs
         self.state = state
@@ -39,16 +40,17 @@ class Node:
 
     def getRatios(self):
         ratios = np.zeros(4)
+        c = sqrt(1.2)
         rewards = [rew if rew is not None else 0 for rew in self.actionRewards]
         for node,idx in zip(self.nodes,range(len(self.nodes))):
             if node is not None:
                 
                 if not node.done:
-                    ratios[idx] = node.values[1]/node.values[0] +  sqrt(2)*sqrt((log(self.values[0]+1))/node.values[0]) + rewards[idx]
+                    ratios[idx] = node.values[1]/node.values[0] +  c*sqrt((log(self.values[0]+1))/node.values[0]) + rewards[idx]
                 else:
-                    ratios[idx] = 1 + sqrt(2)*sqrt(log(self.values[0]+1)/node.values[0])
+                    ratios[idx] = 1 + c*sqrt(log(self.values[0]+1)/node.values[0])
             else:
-                ratios[idx] = self.Qs[self.getIdx(self.state),idx] + sqrt(2)*sqrt(log(self.values[0]+1)/1)
+                ratios[idx] = self.Qs[self.getIdx(self.state),idx] + c*sqrt(log(self.values[0]+1)/1)
         return ratios
     
     def getRawRatios(self):
@@ -62,6 +64,13 @@ class Node:
                 ratios[idx] = self.Qs[self.getIdx(self.state),idx]
         return ratios
     
+    def ratios2Choice(self,ratios,mask):
+        notInd = np.where(mask == 0)[0]
+        maxim = np.amax(ratios[notInd])
+        maxInd = np.where((ratios == maxim)&(mask ==0))[0]
+        choice = np.random.choice(maxInd)
+        return choice
+    
     def getChoice(self,pFlag = 0,getAFlag = 0):
         
         if getAFlag == 0:
@@ -71,25 +80,56 @@ class Node:
         else:
             print("error, returned 0 ")
             return 0
-        #ratios += self.Qs[self.getIdx(self.state)]
-        maxim = np.amax(ratios)
-        indices = np.where(ratios == maxim)
-        choice = np.random.choice(indices[0])
+        
+        mask = np.zeros(len(ratios))
+        actionFound = False
+        
+        while not actionFound:
+            choice = self.ratios2Choice(ratios,mask)
+            
+            if type(self.nodes[choice]) != type(None) and self.nodes[choice].isActive:
+                mask[choice] = 1
+            else:
+                actionFound = True
+            
+            
+            if np.sum(mask) == len(ratios):
+                return -1
+                if pFlag == 1:
+                    print("state is:",self.state)
+                    print("ratios:",ratios)
+                    print("chosen is: ",action[choice])
+                    print("xxxxxxxxxxxxxxxx")
+                    
+            
+                    
+            
+            
+
+
         if pFlag == 1:
             print("state is:",self.state)
             print("ratios:",ratios)
             print("chosen is: ",action[choice])
             print("xxxxxxxxxxxxxxxx")
         return choice
+    
+    
+    
 
     def findBest(self,Que,env,discount,counter = 0):
         
+        self.isActive = True
         choice = self.getChoice()
         Que.push(self)
         
+        
+        
         if self.done:
+            self.isActive = False
             return copy(self.state),0,True
-        if counter > 50:
+        if counter > 50 or choice == -1:
+            self.isActive = False
             return copy(self.state),0,self.done
         
         if not self.isInNodes(choice):
@@ -105,6 +145,8 @@ class Node:
             self.addNode(choice,n)
             Que.push(n)
             
+            
+            self.isActive = False
             return copy(s_),r,done
 
         elif not self.done:
@@ -113,6 +155,8 @@ class Node:
             r += self.actionRewards[choice]
             self.values[1] += r
             r *= discount
+            
+            self.isActive = False
             return copy(s_),r,done
         
         

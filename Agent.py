@@ -133,7 +133,10 @@ class Agent():
             while not done:
                 steps += 1
                 if epNum > -1:
-                    a = self.heuristicTree(s, 500)
+                    if np.random.uniform() < self.eps:
+                        a = np.random.randint(self.a_count)
+                    else :
+                        a = self.heuristicTree(s, 500)
                 else:
                     a = self.epsPickAction(s)
                 s_,r,done = self.env.step(actions[a])
@@ -159,7 +162,7 @@ class Agent():
 
                 
             print(steps)
-            self.eps *= 0.99
+            #self.eps *= 0.99
         
         
 
