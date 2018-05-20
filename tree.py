@@ -9,17 +9,29 @@ action = ["up","down","left","right"]
 
 class Tree():
 
-    def __init__(self,env,agent,state = None, done = None,root = None):
+    def __init__(self,env,agent,tableSize = 60):
         self.env = env
         self.agent = agent
         self.discount = agent.discount
-        self.table = hashTable.Table(60,self.hashFunc)
+        self.table = hashTable.Table(tableSize,self.hashFunc)
+        self.root = None
+    
+    def reset(self):
+        self.table.reset()
+    
+    def addNewRoot(self,state = None, done = None, root = None):
+        self.table.reset()
+        
         if type(root) == type(None):
-            self.root = self.table.addNode(state,done,self.agent.Q,self.agent.getIdx)
+            self.root = self.table.addNode(key = state,done = done,Qs = self.agent.Q,getIdx = self.agent.getIdx)
         
         else:
             self.root = root
-
+        
+        
+        
+    def changeRoot(self,state,done):
+        self.root = self.table.newRoot(key = state,done = done,Qs = self.agent.Q,getIdx = self.agent.getIdx)
             
             
         
@@ -49,9 +61,8 @@ class Tree():
 
         
     def MonteCarloTreeSearch(self,num_paths):
-        for path_num in range(num_paths):
+        while self.root.values[0]<num_paths:
             self.findBestWay()
-        print(str(self.root))
         return self.root.getChoice(pFlag = 1,getAFlag = 1)
             
             

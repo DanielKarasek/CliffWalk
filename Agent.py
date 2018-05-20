@@ -13,20 +13,34 @@ class Agent():
 
     
 
-    def __init__(self,env, lr = 0.03,eps = 0.2,discount = 0.8):
+    def __init__(self,env, lr = 0.03,eps = 0.2,epsDiscount = 0.99,discount = 0.8,keepPlan = True,useTree = True, treeSearchLen = 50):
+        
         self.env = env
+        self.EnvCopy = copy(env)
         self.size = env.size
         self.env_shape = env.shape
         self.y_s,self.x_s =  self.env_shape
+        
+        
+        self.lr = lr
+        self.eps = eps
+        self.epsDisc = epsDiscount
+        self.discount = discount
         self.a_count = env.a_count
         self.Q = self.qTable()
         self.KnownIdx = np.array([])
         self.TrMem = self.transTable()
+        
         self.gr = graphics.Graphics(env.grid,self)
-        self.lr = lr
-        self.eps = eps
-        self.discount = discount
-    
+        
+        
+        
+        
+        
+        self.Tree = tree.Tree(self.EnvCopy,self)
+        self.keepPlan = keepPlan
+        self.useTree = useTree
+        self.treeSearchLen = treeSearchLen
 
     def qTable(self):
         return np.zeros((self.size,self.a_count))
@@ -113,12 +127,24 @@ class Agent():
         self.Q[FormIdx,a] += self.lr * (r+self.discount*(PostMax)  - self.Q[FormIdx,a])
 
     def heuristicTree(self,position,searchLen):
-            EnvCopy = Env.Env()
-            EnvCopy.setPosition(position)
-            Tree = tree.Tree(EnvCopy,self,state = position,done = False)
-            a = Tree.MonteCarloTreeSearch(searchLen)
+            if np.random.uniform() < self.eps:
+                a = np.random.randint(self.a_count)
+            else:
+                self.EnvCopy.setPosition(position)
+                if self.keepPlan == True:
+                    self.Tree.changeRoot(position,False)
+                else:
+                    self.Tree.addNewRoot(position,False)
+                a = self.Tree.MonteCarloTreeSearch(searchLen)
             return a
-        
+    
+    
+    def takeAction(self,s):
+        if self.useTree == True:
+            a = self.heuristicTree(s, self.treeSearchLen)
+        else:
+            a = self.epsPickAction(s)
+        return a
 
 
     def solve(self,episodes = 3000,plan_len = 10):
@@ -132,13 +158,9 @@ class Agent():
             self.gr.update()
             while not done:
                 steps += 1
-                if epNum > -1:
-                    if np.random.uniform() < self.eps:
-                        a = np.random.randint(self.a_count)
-                    else :
-                        a = self.heuristicTree(s, 500)
-                else:
-                    a = self.epsPickAction(s)
+                
+                a = self.takeAction(s)
+                
                 s_,r,done = self.env.step(actions[a])
                 trans = [s[0],s[1],r,s_[0],s_[1]]
 
@@ -160,9 +182,9 @@ class Agent():
                 self.gr.update()
                 time.sleep(0.01)
 
-                
+            self.Tree.reset()
             print(steps)
-            #self.eps *= 0.99
+            self.eps *= self.epsDisc
         
         
 
