@@ -1,9 +1,9 @@
 # Cliff walk
 This is implementation of Dyna-Q and Monte Carlo Tree Search(MCTS) on grid world.
 
-Parameters in main:
-grid :
+Parameters in main :
 
+grid:
 	map of the grid world. Each number has different meaning. 
 	1 - wall
 	2 - goal
