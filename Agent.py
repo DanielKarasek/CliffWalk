@@ -180,7 +180,6 @@ class Agent():
                 self.gr.drawMap()
                 self.gr.drawAgent(s_)
                 self.gr.update()
-                time.sleep(0.01)
 
             self.Tree.reset()
             print(steps)

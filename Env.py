@@ -1,31 +1,22 @@
 import numpy as np
 from copy import copy
 
-grid = np.array(
-      [
-       [1,1,1,1,1,1,1,1,1,1,1,1],
-       [1,3,0,0,0,1,0,0,0,1,2,1],
-       [1,0,1,1,0,0,0,0,0,0,0,1],
-       [1,0,0,1,0,0,0,0,0,1,0,1],
-       [1,0,0,0,0,1,0,0,0,1,0,1],
-       [1,0,0,0,0,0,0,0,0,0,2,1],
-       [1,1,1,1,1,1,1,1,1,1,1,1],
-    ]) # tohle predat z mainu
-# grid = np.array([[1,1,1,1,1],
-#                  [1,3,0,0,1],
-#                  [1,0,0,0,1],
-#                  [1,0,0,2,1],
-#                  [1,1,1,1,1]])
+
 
 class Env():
     
-    def __init__(self):
+    def __init__(self,grid):
+        self.grid = grid
         self.size = grid.size
         self.shape = grid.shape
+        
+        
         ind = np.where(grid==3)
         self.starts_num = len(ind[0])
-        self.STARTS = np.column_stack(ind)     
+        self.STARTS = np.column_stack(ind)
+        
         self.grid = np.where(grid == 3,0,grid)
+        
         self.a_count = 4
         self.restart()
 
@@ -49,7 +40,7 @@ class Env():
         elif action == "left":
             self.state[1] -= 1
         y,x = self.state
-        if grid[y,x] == 1:
+        if self.grid[y,x] == 1:
             self.state = old_pos
                 
 

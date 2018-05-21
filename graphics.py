@@ -45,10 +45,8 @@ class Graphics:
         return hexaInStr if hexaInStr[0] != "x" else "0"+hexaInStr[1]
 
     def getRG(self,value,maximum,minimum):
-        factorRG = self.factor
         value -= (maximum+minimum)/2
         newMaxMin = maximum-(maximum+minimum)/2
-        factorRG = 255/newMaxMin
         value = -newMaxMin if value<-newMaxMin else newMaxMin if value>newMaxMin else value
         value *= self.factor
         other = 255-abs(value)
@@ -92,10 +90,23 @@ class Graphics:
         self.back.create_text(origin[1]+diffX,origin[0]+startY,font = "Palatino 12 bold",text = round(values[2],2))
         self.back.create_text(origin[1]+self.factor - diffX,origin[0]+startY,font = "Palatino 12 bold",text = round(values[3],2))
             
+    
+    def drawGridSquare(self,color,indices):
+        for position in indices:
+            posY = (position[0])*self.factor+2
+            posX = (position[1])*self.factor+2
+            posYPlus = (position[0]+1)*self.factor+2
+            posXPlus = (position[1]+1)*self.factor+2
+            self.back.create_rectangle(posX,posY,posXPlus,posYPlus,fill = color)
+    
+    
     def drawAgent(self,position):
         y = position[0] * self.factor + self.factor/2 + 2
         x = position[1] * self.factor + self.factor/2 + 2
         self.back.create_circle(x,y,self.factor * 0.1,fill = "#0000ff")
+
+
+    
 
     def drawMap(self):
         shape = self.grid.shape
@@ -116,21 +127,23 @@ class Graphics:
         borderIndices = np.where(self.grid == 1)
         borderIndices = np.column_stack(borderIndices)
 
-        for position in borderIndices:
-            posY = (position[0])*self.factor+2
-            posX = (position[1])*self.factor+2
-            posYPlus = (position[0]+1)*self.factor+2
-            posXPlus = (position[1]+1)*self.factor+2
-            self.back.create_rectangle(posX,posY,posXPlus,posYPlus,fill = "gray")
+        self.drawGridSquare("grey", borderIndices)
         
 
-        spaceIndices = np.where(self.grid != 1)
+        spaceIndices = np.where(self.grid == 0 )
         spaceIndices = np.column_stack(spaceIndices)
         
         for position in spaceIndices:
 
             values = self.agent.getValues(position)
             self.drawQTriangle(values,position)
+            
+        targetIndices = np.where(self.grid == 2)
+        targetIndices = np.column_stack(targetIndices)
+        
+        self.drawGridSquare("yellow", targetIndices)
+            
+        
         
     def update(self):
         self.root.update()
